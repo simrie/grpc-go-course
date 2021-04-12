@@ -1,5 +1,5 @@
 # grpc-go-course
-Following along with Udemy's hands on grpC course for Golang by Stephane Maarek.  Includes some changes necessary to work with the downloaded protoc.exe precompiled for Windows, which needed the latest Go protobuf packages.
+Following along with Udemy's hands on gRPC course for Golang by Stephane Maarek.  Includes some changes necessary to work with the downloaded protoc.exe precompiled for Windows, which needed the latest Go protobuf packages.
 
 ## go mod
 
