@@ -1,0 +1,25 @@
+syntax="proto3";
+
+package calculator;
+option go_package="calculator/calculatorpb";
+
+message Calculator {
+    int32 num_1 = 1;
+    int32 num_2 = 2;
+}
+
+message CalculatorRequest {
+    Calculator calculator = 1;
+}
+
+message CalculatorResponse {
+    float answer = 1;
+}
+
+service CalculatorService {
+    rpc Sum (CalculatorRequest) returns (CalculatorResponse) {};
+    rpc Div (CalculatorRequest) returns (CalculatorResponse) {};
+}
+
+
+
