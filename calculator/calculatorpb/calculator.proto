@@ -8,6 +8,14 @@ message Calculator {
     int32 num_2 = 2;
 }
 
+message FindPrimesRequest {
+	int64 num_1 = 1;
+	}
+	
+message	FindPrimesResponse {
+	int64 prime = 1;
+}
+
 message CalculatorRequest {
     Calculator calculator = 1;
 }
@@ -19,6 +27,7 @@ message CalculatorResponse {
 service CalculatorService {
     rpc Sum (CalculatorRequest) returns (CalculatorResponse) {};
     rpc Div (CalculatorRequest) returns (CalculatorResponse) {};
+    rpc FindPrimes(FindPrimesRequest) returns (stream FindPrimesResponse) {};
 }
 
 
