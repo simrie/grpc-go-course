@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"grpc-go-course/calculator/calculatorpb"
+	"io"
 	"log"
 
 	"google.golang.org/grpc"
@@ -22,8 +23,43 @@ func main() {
 	client := calculatorpb.NewCalculatorServiceClient(clientConnectionObject)
 
 	fmt.Println("Created client")
-	doSumUnary(client)
-	doDivUnary(client)
+	//doSumUnary(client)
+	//doDivUnary(client)
+
+	doFindPrimesClientStreaming(client)
+}
+
+func doFindPrimesClientStreaming(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("...Calling Find Primes client streaming RPC...")
+
+	testNumbers := []int64{10, 11, 21, 39, 60, 188, 231, 348}
+	for _, testNumber := range testNumbers {
+
+		req := &calculatorpb.FindPrimesRequest{
+			Num_1: testNumber,
+		}
+		primeFactors := make([]int64, 0)
+		stream, err := c.FindPrimes(context.Background(), req)
+		if err != nil {
+			log.Fatalf("error while calling FindPrimes RPC: %v", err)
+		}
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Something happened: %v", err)
+			}
+			primeFactors = append(primeFactors, res.GetPrime())
+		}
+		if len(primeFactors) == 1 {
+			fmt.Printf("%d is prime \n", req.GetNum_1())
+		} else {
+			fmt.Printf("Prime factors of %d are:  %v\n", req.GetNum_1(), primeFactors)
+		}
+
+	}
 }
 
 func doSumUnary(c calculatorpb.CalculatorServiceClient) {

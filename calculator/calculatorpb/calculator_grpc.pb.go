@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type CalculatorServiceClient interface {
 	Sum(ctx context.Context, in *CalculatorRequest, opts ...grpc.CallOption) (*CalculatorResponse, error)
 	Div(ctx context.Context, in *CalculatorRequest, opts ...grpc.CallOption) (*CalculatorResponse, error)
+	FindPrimes(ctx context.Context, in *FindPrimesRequest, opts ...grpc.CallOption) (CalculatorService_FindPrimesClient, error)
 }
 
 type calculatorServiceClient struct {
@@ -52,12 +53,45 @@ func (c *calculatorServiceClient) Div(ctx context.Context, in *CalculatorRequest
 	return out, nil
 }
 
+func (c *calculatorServiceClient) FindPrimes(ctx context.Context, in *FindPrimesRequest, opts ...grpc.CallOption) (CalculatorService_FindPrimesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CalculatorService_ServiceDesc.Streams[0], "/calculator.CalculatorService/FindPrimes", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calculatorServiceFindPrimesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type CalculatorService_FindPrimesClient interface {
+	Recv() (*FindPrimesResponse, error)
+	grpc.ClientStream
+}
+
+type calculatorServiceFindPrimesClient struct {
+	grpc.ClientStream
+}
+
+func (x *calculatorServiceFindPrimesClient) Recv() (*FindPrimesResponse, error) {
+	m := new(FindPrimesResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalculatorServiceServer is the server API for CalculatorService service.
 // All implementations must embed UnimplementedCalculatorServiceServer
 // for forward compatibility
 type CalculatorServiceServer interface {
 	Sum(context.Context, *CalculatorRequest) (*CalculatorResponse, error)
 	Div(context.Context, *CalculatorRequest) (*CalculatorResponse, error)
+	FindPrimes(*FindPrimesRequest, CalculatorService_FindPrimesServer) error
 	mustEmbedUnimplementedCalculatorServiceServer()
 }
 
@@ -70,6 +104,9 @@ func (UnimplementedCalculatorServiceServer) Sum(context.Context, *CalculatorRequ
 }
 func (UnimplementedCalculatorServiceServer) Div(context.Context, *CalculatorRequest) (*CalculatorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Div not implemented")
+}
+func (UnimplementedCalculatorServiceServer) FindPrimes(*FindPrimesRequest, CalculatorService_FindPrimesServer) error {
+	return status.Errorf(codes.Unimplemented, "method FindPrimes not implemented")
 }
 func (UnimplementedCalculatorServiceServer) mustEmbedUnimplementedCalculatorServiceServer() {}
 
@@ -120,6 +157,27 @@ func _CalculatorService_Div_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CalculatorService_FindPrimes_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(FindPrimesRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CalculatorServiceServer).FindPrimes(m, &calculatorServiceFindPrimesServer{stream})
+}
+
+type CalculatorService_FindPrimesServer interface {
+	Send(*FindPrimesResponse) error
+	grpc.ServerStream
+}
+
+type calculatorServiceFindPrimesServer struct {
+	grpc.ServerStream
+}
+
+func (x *calculatorServiceFindPrimesServer) Send(m *FindPrimesResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // CalculatorService_ServiceDesc is the grpc.ServiceDesc for CalculatorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -136,6 +194,12 @@ var CalculatorService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CalculatorService_Div_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "FindPrimes",
+			Handler:       _CalculatorService_FindPrimes_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "calculator/calculatorpb/calculator.proto",
 }
