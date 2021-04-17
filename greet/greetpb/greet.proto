@@ -19,5 +19,9 @@ message GreetResponse {
 service GreetService {
     // Unary
     rpc Greet(GreetRequest) returns (GreetResponse) {};
+    // Client streaming
+    // Tutorial created new request and response message types but
+    // I am reusing the existing Greet message types since definitions are the same
+    rpc LongRequestGreet(stream GreetRequest) returns (GreetResponse) {};
 }
 

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -21,6 +22,34 @@ type server struct {
 	greetpb.UnimplementedGreetServiceServer
 }
 
+func (*server) LongRequestGreet(stream greetpb.GreetService_LongRequestGreetServer) error {
+	// signature here was copied from under greet_grpc.pb.go's
+	// type GreetServiceServer interface
+	fmt.Printf("LongRequestGreet function was invoked with a stream\n")
+	// client stream can theoretically return whenever it wants
+	// but we are going to try to wait for the end of the requests
+	// by doing stream.Recv() a bunch of times then stream.SendAndClose()
+	responses := make([]string, 0)
+	for {
+		// the req comes from stream.recv
+		req, err := stream.Recv()
+		if err == io.EOF {
+			// How does it know that
+			// we have finished reading the client stream
+			// SendAndClose returns an error so if this doesn't work
+			// the error will be returns on the steam
+			return stream.SendAndClose(&greetpb.GreetResponse{
+				Result: fmt.Sprintf("%v", responses),
+			})
+		}
+		if err != nil {
+			log.Fatalf("\nerror reading client stream %v\n", err)
+		}
+		aGreeting := fmt.Sprintf("Hiya %s;", req.GetGreeting().GetFirstName())
+		responses = append(responses, aGreeting)
+	}
+}
+
 func (*server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb.GreetResponse, error) {
 	fmt.Printf("Greet function was invoked with %v\n", req)
 	firstName := req.GetGreeting().GetFirstName()
@@ -32,7 +61,7 @@ func (*server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb.G
 }
 
 func main() {
-	fmt.Println("Hello World")
+	fmt.Println("Ohayoo-san! Robo-greeta de gozaimasu.")
 
 	// Here we test the grpc code generated from greet.proto
 

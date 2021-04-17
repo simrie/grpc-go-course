@@ -24,6 +24,10 @@ const _ = grpc.SupportPackageIsVersion7
 type GreetServiceClient interface {
 	// Unary
 	Greet(ctx context.Context, in *GreetRequest, opts ...grpc.CallOption) (*GreetResponse, error)
+	// Client streaming
+	// Tutorial created new request and response message types but
+	// I am reusing the existing Greet message types since definitions are the same
+	LongRequestGreet(ctx context.Context, opts ...grpc.CallOption) (GreetService_LongRequestGreetClient, error)
 }
 
 type greetServiceClient struct {
@@ -43,12 +47,50 @@ func (c *greetServiceClient) Greet(ctx context.Context, in *GreetRequest, opts .
 	return out, nil
 }
 
+func (c *greetServiceClient) LongRequestGreet(ctx context.Context, opts ...grpc.CallOption) (GreetService_LongRequestGreetClient, error) {
+	stream, err := c.cc.NewStream(ctx, &GreetService_ServiceDesc.Streams[0], "/greet.GreetService/LongRequestGreet", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &greetServiceLongRequestGreetClient{stream}
+	return x, nil
+}
+
+type GreetService_LongRequestGreetClient interface {
+	Send(*GreetRequest) error
+	CloseAndRecv() (*GreetResponse, error)
+	grpc.ClientStream
+}
+
+type greetServiceLongRequestGreetClient struct {
+	grpc.ClientStream
+}
+
+func (x *greetServiceLongRequestGreetClient) Send(m *GreetRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *greetServiceLongRequestGreetClient) CloseAndRecv() (*GreetResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(GreetResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // GreetServiceServer is the server API for GreetService service.
 // All implementations must embed UnimplementedGreetServiceServer
 // for forward compatibility
 type GreetServiceServer interface {
 	// Unary
 	Greet(context.Context, *GreetRequest) (*GreetResponse, error)
+	// Client streaming
+	// Tutorial created new request and response message types but
+	// I am reusing the existing Greet message types since definitions are the same
+	LongRequestGreet(GreetService_LongRequestGreetServer) error
 	mustEmbedUnimplementedGreetServiceServer()
 }
 
@@ -58,6 +100,9 @@ type UnimplementedGreetServiceServer struct {
 
 func (UnimplementedGreetServiceServer) Greet(context.Context, *GreetRequest) (*GreetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Greet not implemented")
+}
+func (UnimplementedGreetServiceServer) LongRequestGreet(GreetService_LongRequestGreetServer) error {
+	return status.Errorf(codes.Unimplemented, "method LongRequestGreet not implemented")
 }
 func (UnimplementedGreetServiceServer) mustEmbedUnimplementedGreetServiceServer() {}
 
@@ -90,6 +135,32 @@ func _GreetService_Greet_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GreetService_LongRequestGreet_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(GreetServiceServer).LongRequestGreet(&greetServiceLongRequestGreetServer{stream})
+}
+
+type GreetService_LongRequestGreetServer interface {
+	SendAndClose(*GreetResponse) error
+	Recv() (*GreetRequest, error)
+	grpc.ServerStream
+}
+
+type greetServiceLongRequestGreetServer struct {
+	grpc.ServerStream
+}
+
+func (x *greetServiceLongRequestGreetServer) SendAndClose(m *GreetResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *greetServiceLongRequestGreetServer) Recv() (*GreetRequest, error) {
+	m := new(GreetRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // GreetService_ServiceDesc is the grpc.ServiceDesc for GreetService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +173,12 @@ var GreetService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _GreetService_Greet_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "LongRequestGreet",
+			Handler:       _GreetService_LongRequestGreet_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "greet/greetpb/greet.proto",
 }
