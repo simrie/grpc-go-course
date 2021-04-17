@@ -28,24 +28,24 @@ func (*server) Sum(ctx context.Context, req *calculatorpb.CalculatorRequest) (*c
 }
 
 func (*server) FindPrimes(req *calculatorpb.FindPrimesRequest, stream calculatorpb.CalculatorService_FindPrimesServer) error {
-	fmt.Printf("Find Primes function was invoked with stream %v\n", stream)
+	fmt.Printf("Find Primes server side streaming function was invoked to find prime factors of %v\n", req.GetNum_1())
 
 	// algorithm to find primes
-	reset_k := int64(2)
-	k := reset_k
+	resetTestFactor := int64(2)
+	testFactor := resetTestFactor
 	numToFactor := req.GetNum_1()
-	for numToFactor >= k {
-		if numToFactor%k == 0 {
+	for numToFactor >= testFactor {
+		if numToFactor%testFactor == 0 {
 			stream.Send(&calculatorpb.FindPrimesResponse{
-				Prime: k,
+				Prime: testFactor,
 			})
-			numToFactor = numToFactor / k
+			numToFactor = numToFactor / testFactor
 			//fmt.Printf("\nnumToFactor is now %d \n", numToFactor)
-			k = reset_k
+			testFactor = resetTestFactor
 		} else {
-			k++
+			testFactor++
 		}
-		//fmt.Printf("\nk is now to %v\n", k)
+		//fmt.Printf("\ntestFactor is now to %v\n", testFactor)
 	}
 	return nil
 }
