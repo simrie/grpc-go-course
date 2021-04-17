@@ -26,13 +26,13 @@ func main() {
 	//doSumUnary(client)
 	//doDivUnary(client)
 
-	doFindPrimesClientStreaming(client)
+	doFindPrimesServerStreaming(client)
 }
 
-func doFindPrimesClientStreaming(c calculatorpb.CalculatorServiceClient) {
-	fmt.Println("...Calling Find Primes client streaming RPC...")
+func doFindPrimesServerStreaming(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("...Calling Find Primes server streaming RPC...")
 
-	testNumbers := []int64{10, 11, 21, 39, 60, 188, 231, 348}
+	testNumbers := []int64{10, 11, 21, 39, 60, 188, 231, 348, 56789, 109, 521, 321654987, 419, 85297}
 	for _, testNumber := range testNumbers {
 
 		req := &calculatorpb.FindPrimesRequest{
