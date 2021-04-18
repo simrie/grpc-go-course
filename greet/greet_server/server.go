@@ -34,8 +34,8 @@ func (*server) LongRequestGreet(stream greetpb.GreetService_LongRequestGreetServ
 		// the req comes from stream.recv
 		req, err := stream.Recv()
 		if err == io.EOF {
-			// How does it know that
-			// we have finished reading the client stream
+			// Client should send stream.CloseAndRecv()
+			// so we know we have finished reading the client stream
 			// SendAndClose returns an error so if this doesn't work
 			// the error will be returns on the steam
 			return stream.SendAndClose(&greetpb.GreetResponse{

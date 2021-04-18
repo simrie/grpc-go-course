@@ -10,7 +10,7 @@ message Calculator {
 
 message FindPrimesRequest {
 	int64 num_1 = 1;
-	}
+}
 	
 message	FindPrimesResponse {
 	int64 prime = 1;
@@ -24,12 +24,22 @@ message CalculatorResponse {
     float answer = 1;
 }
 
+message ComputeAverageRequest {
+	int64 num = 1;
+}
+
+message ComputeAverageResponse {
+    double average = 1;
+}
+
 service CalculatorService {
     // unary
     rpc Sum (CalculatorRequest) returns (CalculatorResponse) {};
     rpc Div (CalculatorRequest) returns (CalculatorResponse) {};
     // server streaming
     rpc FindPrimes(FindPrimesRequest) returns (stream FindPrimesResponse) {};
+    // client streaming
+    rpc ComputeAverage(stream ComputeAverageRequest) returns (ComputeAverageResponse) {};
 }
 
 
