@@ -29,6 +29,8 @@ type CalculatorServiceClient interface {
 	FindPrimes(ctx context.Context, in *FindPrimesRequest, opts ...grpc.CallOption) (CalculatorService_FindPrimesClient, error)
 	// client streaming
 	ComputeAverage(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_ComputeAverageClient, error)
+	// bidirectional streaming
+	GetHighestSoFar(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_GetHighestSoFarClient, error)
 }
 
 type calculatorServiceClient struct {
@@ -123,6 +125,37 @@ func (x *calculatorServiceComputeAverageClient) CloseAndRecv() (*ComputeAverageR
 	return m, nil
 }
 
+func (c *calculatorServiceClient) GetHighestSoFar(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_GetHighestSoFarClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CalculatorService_ServiceDesc.Streams[2], "/calculator.CalculatorService/GetHighestSoFar", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calculatorServiceGetHighestSoFarClient{stream}
+	return x, nil
+}
+
+type CalculatorService_GetHighestSoFarClient interface {
+	Send(*GetHighestIntRequest) error
+	Recv() (*GetHighestIntResponse, error)
+	grpc.ClientStream
+}
+
+type calculatorServiceGetHighestSoFarClient struct {
+	grpc.ClientStream
+}
+
+func (x *calculatorServiceGetHighestSoFarClient) Send(m *GetHighestIntRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *calculatorServiceGetHighestSoFarClient) Recv() (*GetHighestIntResponse, error) {
+	m := new(GetHighestIntResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalculatorServiceServer is the server API for CalculatorService service.
 // All implementations must embed UnimplementedCalculatorServiceServer
 // for forward compatibility
@@ -134,6 +167,8 @@ type CalculatorServiceServer interface {
 	FindPrimes(*FindPrimesRequest, CalculatorService_FindPrimesServer) error
 	// client streaming
 	ComputeAverage(CalculatorService_ComputeAverageServer) error
+	// bidirectional streaming
+	GetHighestSoFar(CalculatorService_GetHighestSoFarServer) error
 	mustEmbedUnimplementedCalculatorServiceServer()
 }
 
@@ -152,6 +187,9 @@ func (UnimplementedCalculatorServiceServer) FindPrimes(*FindPrimesRequest, Calcu
 }
 func (UnimplementedCalculatorServiceServer) ComputeAverage(CalculatorService_ComputeAverageServer) error {
 	return status.Errorf(codes.Unimplemented, "method ComputeAverage not implemented")
+}
+func (UnimplementedCalculatorServiceServer) GetHighestSoFar(CalculatorService_GetHighestSoFarServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetHighestSoFar not implemented")
 }
 func (UnimplementedCalculatorServiceServer) mustEmbedUnimplementedCalculatorServiceServer() {}
 
@@ -249,6 +287,32 @@ func (x *calculatorServiceComputeAverageServer) Recv() (*ComputeAverageRequest, 
 	return m, nil
 }
 
+func _CalculatorService_GetHighestSoFar_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalculatorServiceServer).GetHighestSoFar(&calculatorServiceGetHighestSoFarServer{stream})
+}
+
+type CalculatorService_GetHighestSoFarServer interface {
+	Send(*GetHighestIntResponse) error
+	Recv() (*GetHighestIntRequest, error)
+	grpc.ServerStream
+}
+
+type calculatorServiceGetHighestSoFarServer struct {
+	grpc.ServerStream
+}
+
+func (x *calculatorServiceGetHighestSoFarServer) Send(m *GetHighestIntResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *calculatorServiceGetHighestSoFarServer) Recv() (*GetHighestIntRequest, error) {
+	m := new(GetHighestIntRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalculatorService_ServiceDesc is the grpc.ServiceDesc for CalculatorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -274,6 +338,12 @@ var CalculatorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ComputeAverage",
 			Handler:       _CalculatorService_ComputeAverage_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetHighestSoFar",
+			Handler:       _CalculatorService_GetHighestSoFar_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},

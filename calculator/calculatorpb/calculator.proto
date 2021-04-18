@@ -32,6 +32,14 @@ message ComputeAverageResponse {
     double average = 1;
 }
 
+message GetHighestIntRequest {
+    int32 num = 1;
+}
+
+message GetHighestIntResponse {
+    int32 answer = 1;
+}
+
 service CalculatorService {
     // unary
     rpc Sum (CalculatorRequest) returns (CalculatorResponse) {};
@@ -40,6 +48,8 @@ service CalculatorService {
     rpc FindPrimes(FindPrimesRequest) returns (stream FindPrimesResponse) {};
     // client streaming
     rpc ComputeAverage(stream ComputeAverageRequest) returns (ComputeAverageResponse) {};
+    // bidirectional streaming 
+    rpc GetHighestSoFar(stream GetHighestIntRequest) returns (stream GetHighestIntResponse) {};
 }
 
 

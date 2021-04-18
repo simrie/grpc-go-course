@@ -16,6 +16,14 @@ message GreetResponse {
     string result = 1;
 }
 
+message GreetEveryoneRequest {
+    Greeting greeting = 1;
+}
+
+message GreetEveryoneResponse {
+    string result = 1;
+}
+
 service GreetService {
     // Unary
     rpc Greet(GreetRequest) returns (GreetResponse) {};
@@ -23,5 +31,9 @@ service GreetService {
     // Tutorial created new request and response message types but
     // I am reusing the existing Greet message types since definitions are the same
     rpc LongRequestGreet(stream GreetRequest) returns (GreetResponse) {};
+    // BiDi Streaming
+    rpc GreetEveryone(stream GreetEveryoneRequest) returns (stream GreetEveryoneResponse) {};
+
+    
 }
 
