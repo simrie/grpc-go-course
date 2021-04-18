@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -48,6 +49,35 @@ func (*server) FindPrimes(req *calculatorpb.FindPrimesRequest, stream calculator
 		//fmt.Printf("\ntestFactor is now to %v\n", testFactor)
 	}
 	return nil
+}
+
+func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAverageServer) error {
+	fmt.Printf("Client stream function ComputerAverage was invoked\n")
+
+	responses := make([]int64, 0)
+	var average float64 = 0
+	var numerator int64 = 0
+	var denominator int64 = 0
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			// we are done
+			// computer the average
+			average = float64(numerator) / float64(denominator)
+			return stream.SendAndClose(&calculatorpb.ComputeAverageResponse{
+				Average: average,
+			})
+
+		}
+		if err != nil {
+			log.Fatalf("\nerror reading client stream %v\n", err)
+		}
+		aNum := req.GetNum()
+		numerator = numerator + aNum
+		denominator++
+		responses = append(responses, aNum)
+	}
 }
 
 func (*server) Div(ctx context.Context, req *calculatorpb.CalculatorRequest) (*calculatorpb.CalculatorResponse, error) {

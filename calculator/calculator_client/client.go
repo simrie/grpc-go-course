@@ -6,6 +6,7 @@ import (
 	"grpc-go-course/calculator/calculatorpb"
 	"io"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 )
@@ -27,6 +28,34 @@ func main() {
 	//doDivUnary(client)
 
 	doFindPrimesServerStreaming(client)
+	doCalculateAverageClientStreaming(client)
+}
+
+func doCalculateAverageClientStreaming(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("...Calling CalculateAverage client streaming RPC...")
+
+	stream, err := c.ComputeAverage(context.Background())
+	if err != nil {
+		log.Fatalf("Client streaming ComputeAverage error %v\n", err)
+	}
+
+	numsToAverage := []int64{3, 10, 42}
+
+	for _, num := range numsToAverage {
+		req := &calculatorpb.ComputeAverageRequest{
+			Num: num,
+		}
+		fmt.Println("Sending request to CalculateAverage")
+		stream.Send(req)
+		time.Sleep(100 * time.Millisecond)
+	}
+	response, err := stream.CloseAndRecv()
+	if err != nil {
+		fmt.Printf("\nError receiving client stream CalculateAverage response. %v\n", err)
+	}
+	// In client streaming the client gets a single response
+	// which was in this case defined as a float64
+	fmt.Printf("\nThe average of %v is %f\n", numsToAverage, response.GetAverage())
 }
 
 func doFindPrimesServerStreaming(c calculatorpb.CalculatorServiceClient) {
