@@ -86,40 +86,20 @@ func doBiDiStreaming(c greetpb.GreetServiceClient) {
 		return
 	}
 
-	requests := []*greetpb.GreetEveryoneRequest{
-		&greetpb.GreetEveryoneRequest{
-			Greeting: &greetpb.Greeting{
-				FirstName: "Stephane",
-			},
-		},
-		&greetpb.GreetEveryoneRequest{
-			Greeting: &greetpb.Greeting{
-				FirstName: "John",
-			},
-		},
-		&greetpb.GreetEveryoneRequest{
-			Greeting: &greetpb.Greeting{
-				FirstName: "Lucy",
-			},
-		},
-		&greetpb.GreetEveryoneRequest{
-			Greeting: &greetpb.Greeting{
-				FirstName: "Mark",
-			},
-		},
-		&greetpb.GreetEveryoneRequest{
-			Greeting: &greetpb.Greeting{
-				FirstName: "Piper",
-			},
-		},
-	}
+	greetNames := []string{"Boopsie", "Jolene", "Margot", "Veronica"}
 
 	// Create a channel
 	waitc := make(chan struct{})
 	// we send a bunch of messages to the client (go routine)
 	go func() {
 		// function to send a bunch of messages
-		for _, req := range requests {
+		for _, greetName := range greetNames {
+			req := &greetpb.GreetEveryoneRequest{
+				Greeting: &greetpb.Greeting{
+					FirstName: greetName,
+					LastName:  "",
+				},
+			}
 			fmt.Printf("Sending message: %v\n", req)
 			stream.Send(req)
 			time.Sleep(1000 * time.Millisecond)
