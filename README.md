@@ -1,5 +1,5 @@
 # grpc-go-course
-Following along with Udemy's hands on gRPC course for Golang by Stephane Maarek.  Includes some changes necessary to work with the downloaded protoc.exe precompiled for Windows, which needed the latest Go protobuf packages.
+Following along with Udemy's hands on gRPC course for Golang by Stephane Maarek.  Includes some changes necessary to work with the downloaded protoc.exe precompiled for Windows.
 
 ## go mod
 
@@ -29,7 +29,9 @@ After extracting the zipped download, I moved protoc.exe to a folder that was al
 
 ## generate.sh and the protoc command
 
-Perhaps because I'm using a pre-built protoc.exe, the tutorial's protoc command did not work for me to generate the "Greet" pb.go files.  The protoc.exe I downloaded was expecting newer versions of the protobuf library.
+Perhaps because I'm using a pre-built protoc.exe, the tutorial's protoc command did not work for me to generate the "Greet" pb.go files.  
+
+The protoc.exe I downloaded was expecting an input path that contained slashes, additional flags, and generated two pb.go files.  One of the files has the structures and functions for gRPC commands, and the other contains the type definitions.
 
 ## Latest protobuf libraries
 
@@ -46,7 +48,7 @@ go mod tidy
 ```
 
 
-## protoc.exe command that worked for me
+## protoc.exe command that worked for me in Windows
 
 I drew from the examples in the official "Quickstart" tutorial.
 
