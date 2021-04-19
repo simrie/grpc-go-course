@@ -91,6 +91,35 @@ func (*server) Div(ctx context.Context, req *calculatorpb.CalculatorRequest) (*c
 	return res, nil
 }
 
+func (*server) GetHighestSoFar(stream calculatorpb.CalculatorService_GetHighestSoFarServer) error {
+	fmt.Printf("GetHighestSoFar function was invoked as a bi-directional streaming request\n")
+
+	var highestSoFar int32 = 0
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+			return err
+		}
+		testNum := req.GetNum()
+		if testNum > highestSoFar {
+			highestSoFar = testNum
+			err = stream.Send(&calculatorpb.GetHighestIntResponse{
+				Answer: highestSoFar,
+			})
+			if err != nil {
+				//log.Fatalf("Error while sending data to client: %v", err)
+				return err
+			}
+		}
+
+	}
+}
+
 func main() {
 	fmt.Println("It's time for Numberwang")
 

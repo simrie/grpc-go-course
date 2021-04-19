@@ -90,6 +90,7 @@ func doBiDiStreaming(c greetpb.GreetServiceClient) {
 
 	// Create a channel
 	waitc := make(chan struct{})
+
 	// we send a bunch of messages to the client (go routine)
 	go func() {
 		// function to send a bunch of messages
@@ -106,6 +107,7 @@ func doBiDiStreaming(c greetpb.GreetServiceClient) {
 		}
 		stream.CloseSend()
 	}()
+	
 	// we receive a bunch of messages from the client (go routine)
 	go func() {
 		// function to receive a bunch of messages
