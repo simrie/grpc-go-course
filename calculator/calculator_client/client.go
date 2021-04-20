@@ -29,6 +29,57 @@ func main() {
 
 	doFindPrimesServerStreaming(client)
 	doCalculateAverageClientStreaming(client)
+	doGetHighestSoFarBiDiStreaming(client)
+}
+
+func doGetHighestSoFarBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("...Calling GetHighestSoFar bidirectional streaming RPC...")
+
+	// we create a stream by invoking the client
+	stream, err := c.GetHighestSoFar(context.Background())
+	if err != nil {
+		log.Fatalf("Error while creating stream: %v", err)
+		return
+	}
+
+	testNumbers := []int32{1, 5, 3, 6, 2, 20}
+
+	// Create a channel
+	waitc := make(chan struct{})
+
+	// we send a bunch of messages to the client (go routine)
+	go func() {
+		// function to send a bunch of messages
+		for _, testNum := range testNumbers {
+			req := &calculatorpb.GetHighestIntRequest{
+				Num: testNum,
+			}
+			fmt.Printf("Sending message: %v\n", req)
+			stream.Send(req)
+			time.Sleep(1000 * time.Millisecond)
+		}
+		stream.CloseSend()
+	}()
+
+	// we receive a bunch of messages from the client (go routine)
+	go func() {
+		// function to receive a bunch of messages
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while receiving: %v", err)
+				break
+			}
+			fmt.Printf("Received: %v\n", res.GetAnswer())
+		}
+		close(waitc)
+	}()
+
+	// block until everything is done
+	<-waitc
 }
 
 func doCalculateAverageClientStreaming(c calculatorpb.CalculatorServiceClient) {
