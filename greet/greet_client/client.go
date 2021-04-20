@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -32,12 +34,14 @@ func main() {
 	client := greetpb.NewGreetServiceClient(clientConnectionObject)
 
 	fmt.Printf("Created client %f", client)
-	doUnary(client)
+	//doUnary(client)
 
-	doClientStreaming(client)
+	//doClientStreaming(client)
 
-	doBiDiStreaming(client)
+	//doBiDiStreaming(client)
 
+	doUnaryWithDeadline(client, 5*time.Second)      // should complete
+	doUnaryWithDeadline(client, 1*time.Millisecond) // should timeout
 }
 
 func doClientStreaming(c greetpb.GreetServiceClient) {
@@ -107,7 +111,7 @@ func doBiDiStreaming(c greetpb.GreetServiceClient) {
 		}
 		stream.CloseSend()
 	}()
-	
+
 	// we receive a bunch of messages from the client (go routine)
 	go func() {
 		// function to receive a bunch of messages
@@ -142,6 +146,42 @@ func doUnary(c greetpb.GreetServiceClient) {
 	res, err := c.Greet(context.Background(), req)
 	if err != nil {
 		log.Fatalf("\nerror while calling Greet RPC: %v", err)
+	}
+	log.Printf("\nResponse from Greet: %v", res.Result)
+}
+
+func doUnaryWithDeadline(c greetpb.GreetServiceClient, timeout time.Duration) {
+	fmt.Println("\n...Starting to do a Unary With Deadline RPC...")
+	req := &greetpb.GreetWithDeadlineRequest{
+		Greeting: &greetpb.Greeting{
+			FirstName: "Boopsie",
+			LastName:  "McFeathers",
+		},
+	}
+	// We initialize the context with the a timeout
+	// to be passed between server APIs
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+
+	defer cancel()
+
+	res, err := c.GreetWithDeadline(ctx, req)
+	if err != nil {
+
+		statusErr, ok := status.FromError(err)
+		if ok {
+			// this is a gRPC error
+			if statusErr.Code() == codes.DeadlineExceeded {
+				fmt.Println("Timeout was hit.  Deadline exceeded")
+			} else {
+				log.Fatalf("Unexpected gRPC status error: %v", statusErr)
+			}
+
+		} else {
+			// regular error
+			log.Fatalf("\nerror while calling Greet RPC: %v", err)
+		}
+		// return on any err so we do not try to print a non-existant res.Result
+		return
 	}
 	log.Printf("\nResponse from Greet: %v", res.Result)
 }
