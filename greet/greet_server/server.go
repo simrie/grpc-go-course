@@ -6,10 +6,13 @@ import (
 	"io"
 	"log"
 	"net"
+	"time"
 
 	"grpc-go-course/greet/greetpb"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // This code was created following along the Udemy grpc course
@@ -84,6 +87,27 @@ func (*server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb.G
 		Result: result,
 	}
 	return res, nil
+}
+
+func (*server) GreetWithDeadline(ctx context.Context, req *greetpb.GreetWithDeadlineRequest) (*greetpb.GreetWithDeadlineResponse, error) {
+	fmt.Printf("GreetWithDeadline function was invoked with %v\n", req)
+
+	// Check to see if the timeout occurred
+	for i := 0; i < 3; i++ {
+		if ctx.Err() == context.Canceled {
+			msg := "Client cancelled the request (timeout)"
+			fmt.Println(msg)
+			return nil, status.Error(codes.DeadlineExceeded, msg)
+		}
+		time.Sleep(1 * time.Second)
+	}
+	firstName := req.GetGreeting().GetFirstName()
+	result := "Glad you made it, " + firstName
+	res := &greetpb.GreetWithDeadlineResponse{
+		Result: result,
+	}
+	return res, nil
+
 }
 
 func main() {
